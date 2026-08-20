@@ -4,17 +4,10 @@
 #include <iomanip>
 #include <algorithm>
 #include <climits>
+#include "include/Process.h"
 using namespace std;
 
-struct Process {
-    int pid;
-    int arrival_time;
-    int burst_time;
-    int remaining_time;   // used for Round Robin
-    int completion_time;
-    int waiting_time;
-    int turnaround_time;
-};
+
 
 void printResults(vector<Process>& processes, const string& title) {
     double total_wt = 0, total_tat = 0;
