@@ -1,0 +1,39 @@
+# Compiled executables
+scheduler
+scheduler.exe
+*.exe
+*.out
+
+# Object files
+*.o
+*.obj
+
+# Build directories
+build/
+cmake-build-*/
+
+# VS Code
+.vscode/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Debug files
+*.dSYM/
+*.pdb
+
+# Generated results
+results/*
+!results/.gitkeep
+
+# Temporary files
+*.tmp
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
