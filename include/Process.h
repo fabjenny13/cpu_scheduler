@@ -1,3 +1,6 @@
+#ifndef PROCESS_H
+#define PROCESS_H
+
 enum class WorkloadType {
     CPU_BOUND,
     IO_BOUND,
@@ -5,16 +8,21 @@ enum class WorkloadType {
     BACKGROUND
 };
 
-
 struct Process {
     int pid;
+
     int arrival_time;
     int burst_time;
-    int remaining_time;   // used for Round Robin
-    int completion_time;
-    int waiting_time;
-    int turnaround_time;
+    int remaining_time;
 
-    //to be added soon:
-    //WorkloadType workload_type;
+    int start_time = -1;
+    int completion_time = -1;
+
+    int waiting_time = 0;
+    int turnaround_time = 0;
+    int response_time = 0;
+
+    WorkloadType workload;
 };
+
+#endif
