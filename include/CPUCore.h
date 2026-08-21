@@ -8,8 +8,11 @@ private:
     bool busy;
     int current_process;
 
+    double frequency;
+    bool performance_core;
+
 public:
-    CPUCore(int id);
+    CPUCore(int id, bool performance_core = true);
 
     int getId() const;
 
@@ -17,9 +20,15 @@ public:
 
     int getCurrentProcess() const;
 
+    double getFrequency() const;
+
+    bool isPerformanceCore() const;
+
     void assignProcess(int pid);
 
     void release();
+
+    void setFrequency(double frequency);
 };
 
 #endif

@@ -1,10 +1,14 @@
 #include "CPUCore.h"
 
-CPUCore::CPUCore(int id)
+CPUCore::CPUCore(int id, bool performance_core)
 {
     this->id = id;
+    this->performance_core = performance_core;
+
     busy = false;
     current_process = -1;
+
+    frequency = 1.0;
 }
 
 int CPUCore::getId() const
@@ -22,6 +26,16 @@ int CPUCore::getCurrentProcess() const
     return current_process;
 }
 
+double CPUCore::getFrequency() const
+{
+    return frequency;
+}
+
+bool CPUCore::isPerformanceCore() const
+{
+    return performance_core;
+}
+
 void CPUCore::assignProcess(int pid)
 {
     current_process = pid;
@@ -32,4 +46,9 @@ void CPUCore::release()
 {
     current_process = -1;
     busy = false;
+}
+
+void CPUCore::setFrequency(double frequency)
+{
+    this->frequency = frequency;
 }
