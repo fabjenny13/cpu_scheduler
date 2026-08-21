@@ -1,4 +1,5 @@
 #include "EnergyAwareScheduler.h"
+#include "Frequency.h"
 
 FrequencyLevel EnergyAwareScheduler::chooseFrequency(
     const Process& process) const
@@ -22,19 +23,18 @@ FrequencyLevel EnergyAwareScheduler::chooseFrequency(
 }
 
 CPUCore* EnergyAwareScheduler::chooseCore(
-    Process& process,
+    const Process& process,
     std::vector<CPUCore>& cores
 ) const
 {
-    CPUCore* best_core = nullptr;
+    CPUCore* fallback = nullptr;
 
     for (auto& core : cores)
     {
         if (core.isBusy())
             continue;
 
-        // CPU-bound and interactive workloads prefer
-        // performance cores.
+        // Prefer performance cores for CPU-heavy/interactive work.
         if ((process.workload == WorkloadType::CPU_BOUND ||
              process.workload == WorkloadType::INTERACTIVE)
             && core.isPerformanceCore())
@@ -42,33 +42,45 @@ CPUCore* EnergyAwareScheduler::chooseCore(
             return &core;
         }
 
-        // Background / I/O workloads can use any available core.
-        if (best_core == nullptr)
-        {
-            best_core = &core;
-        }
+        // Keep an available core as fallback.
+        if (fallback == nullptr)
+            fallback = &core;
     }
 
-    return best_core;
+    return fallback;
 }
 
 void EnergyAwareScheduler::schedule(
-    std::vector<Process>& processes)
+    std::vector<Process>& processes,
+    std::vector<CPUCore>& cores,
+    int current_time)
 {
-    // This is only the first version.
-    //
-    // The real scheduling loop will eventually
-    // be controlled by Simulator.
-
-    std::vector<CPUCore> cores;
-
-    cores.emplace_back(0, true);
-    cores.emplace_back(1, true);
-    cores.emplace_back(2, false);
-    cores.emplace_back(3, false);
-
     for (auto& process : processes)
     {
+        // Ignore processes that haven't arrived.
+        if (process.arrival_time > current_time)
+            continue;
+
+        // Ignore completed processes.
+        if (process.remaining_time <= 0)
+            continue;
+
+        // Don't schedule a process that is already running.
+        bool already_running = false;
+
+        for (auto& core : cores)
+        {
+            if (core.isBusy() &&
+                core.getCurrentProcess() == process.pid)
+            {
+                already_running = true;
+                break;
+            }
+        }
+
+        if (already_running)
+            continue;
+
         CPUCore* core = chooseCore(process, cores);
 
         if (core == nullptr)
@@ -83,10 +95,7 @@ void EnergyAwareScheduler::schedule(
 
         core->assignProcess(process.pid);
 
-        // For now, just calculate the first scheduling decision.
-        // Execution and energy calculation will be handled
-        // by Simulator later.
-
-        core->release();
+        // For now we stop here.
+        // Simulator will actually execute the process.
     }
 }

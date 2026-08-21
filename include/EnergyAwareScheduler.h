@@ -2,7 +2,6 @@
 #define ENERGY_AWARE_SCHEDULER_H
 
 #include "Scheduler.h"
-#include "CPUCore.h"
 #include "SchedulingDecision.h"
 
 class EnergyAwareScheduler : public Scheduler
@@ -13,13 +12,15 @@ private:
     ) const;
 
     CPUCore* chooseCore(
-        Process& process,
+        const Process& process,
         std::vector<CPUCore>& cores
     ) const;
 
 public:
     void schedule(
-        std::vector<Process>& processes
+        std::vector<Process>& processes,
+        std::vector<CPUCore>& cores,
+        int current_time
     ) override;
 };
 
