@@ -26,6 +26,7 @@ public:
     void run();
 
     int getCurrentTime() const;
+    const std::vector<Process>& getProcesses() const;
 };
 
 #endif

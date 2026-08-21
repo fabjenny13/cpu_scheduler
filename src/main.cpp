@@ -5,6 +5,8 @@
 #include "FCFS.h"
 #include "SJF.h"
 #include "RoundRobin.h"
+#include "EnergyAwareScheduler.h"
+#include "Simulator.h"
 #include "Metrics.h"
 
 int main()
@@ -28,6 +30,21 @@ int main()
     printResults(fcfs_processes, "FCFS");
     printResults(sjf_processes, "SJF");
     printResults(rr_processes, "Round Robin");
+
+    EnergyAwareScheduler scheduler;
+
+    Simulator simulator(
+        processes,
+        2,
+        &scheduler
+    );
+
+    simulator.run();
+
+    printResults(
+        simulator.getProcesses(),
+        "Energy Aware Scheduler"
+    );
 
     return 0;
 }

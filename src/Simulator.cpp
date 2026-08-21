@@ -98,3 +98,9 @@ int Simulator::getCurrentTime() const
 {
     return current_time;
 }
+
+
+const std::vector<Process>& Simulator::getProcesses() const
+{
+    return processes;
+}
