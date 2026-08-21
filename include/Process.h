@@ -23,6 +23,8 @@ struct Process {
     int response_time = 0;
 
     WorkloadType workload;
+
+    double cpu_intensity;
 };
 
 #endif
