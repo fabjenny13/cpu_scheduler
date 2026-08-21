@@ -6,18 +6,92 @@ Simulator::Simulator(
     Scheduler* scheduler)
 {
     this->processes = processes;
+    this->processes = processes;
+
+    for (auto& process : this->processes)
+    {
+        process.remaining_time = process.burst_time;
+    }
     this->scheduler = scheduler;
     current_time = 0;
 
     for (int i = 0; i < number_of_cores; i++)
     {
-        cores.emplace_back(i);
+        // For now:
+        // first half = performance cores
+        // second half = efficiency cores
+        bool performance = (i < number_of_cores / 2);
+
+        cores.emplace_back(i, performance);
     }
 }
 
 void Simulator::run()
 {
-    scheduler->schedule(processes);
+    bool processes_remaining = true;
+
+    while (processes_remaining)
+    {
+        processes_remaining = false;
+
+        // Check whether there is still work to do.
+        for (const auto& process : processes)
+        {
+            if (process.remaining_time > 0)
+            {
+                processes_remaining = true;
+                break;
+            }
+        }
+
+        if (!processes_remaining)
+            break;
+
+        // Ask scheduler to assign waiting processes.
+        scheduler->schedule(
+            processes,
+            cores,
+            current_time
+        );
+
+        // Execute one unit of time on every busy core.
+        for (auto& core : cores)
+        {
+            if (!core.isBusy())
+                continue;
+
+            int pid = core.getCurrentProcess();
+
+            for (auto& process : processes)
+            {
+                if (process.pid != pid)
+                    continue;
+
+                process.remaining_time--;
+
+                // Process finished.
+                if (process.remaining_time == 0)
+                {
+                    process.completion_time =
+                        current_time + 1;
+
+                    process.turnaround_time =
+                        process.completion_time -
+                        process.arrival_time;
+
+                    process.waiting_time =
+                        process.turnaround_time -
+                        process.burst_time;
+
+                    core.release();
+                }
+
+                break;
+            }
+        }
+
+        current_time++;
+    }
 }
 
 int Simulator::getCurrentTime() const
