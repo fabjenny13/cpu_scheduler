@@ -2,70 +2,81 @@
 #include "Frequency.h"
 
 FrequencyLevel EnergyAwareScheduler::chooseFrequency(
-    const Process& process) const
+    const std::vector<CPUCore>& cores
+) const
 {
-    switch (process.workload)
+    int busy_cores = 0;
+
+    for (const auto& core : cores)
     {
-        case WorkloadType::CPU_BOUND:
-            return FrequencyLevel::HIGH;
-
-        case WorkloadType::INTERACTIVE:
-            return FrequencyLevel::MEDIUM;
-
-        case WorkloadType::IO_BOUND:
-            return FrequencyLevel::LOW;
-
-        case WorkloadType::BACKGROUND:
-            return FrequencyLevel::LOW;
+        if (core.isBusy())
+            busy_cores++;
     }
 
-    return FrequencyLevel::MEDIUM;
+    double utilization =
+        static_cast<double>(busy_cores) / cores.size();
+
+    if (utilization >= 0.75)
+        return FrequencyLevel::HIGH;
+
+    if (utilization >= 0.50)
+        return FrequencyLevel::MEDIUM;
+
+    return FrequencyLevel::LOW;
 }
 
 CPUCore* EnergyAwareScheduler::chooseCore(
-    const Process& process,
     std::vector<CPUCore>& cores
 ) const
 {
-    CPUCore* fallback = nullptr;
+    CPUCore* efficiency_core = nullptr;
+    CPUCore* performance_core = nullptr;
 
     for (auto& core : cores)
     {
         if (core.isBusy())
             continue;
 
-        // Prefer performance cores for CPU-heavy/interactive work.
-        if ((process.workload == WorkloadType::CPU_BOUND ||
-             process.workload == WorkloadType::INTERACTIVE)
-            && core.isPerformanceCore())
+        if (core.isPerformanceCore())
         {
-            return &core;
+            if (performance_core == nullptr)
+                performance_core = &core;
         }
-
-        // Keep an available core as fallback.
-        if (fallback == nullptr)
-            fallback = &core;
+        else
+        {
+            if (efficiency_core == nullptr)
+                efficiency_core = &core;
+        }
     }
 
-    return fallback;
+    // Prefer efficiency cores to save energy.
+    if (efficiency_core != nullptr)
+        return efficiency_core;
+
+    return performance_core;
 }
+
 
 void EnergyAwareScheduler::schedule(
     std::vector<Process>& processes,
     std::vector<CPUCore>& cores,
     int current_time)
 {
+    FrequencyLevel frequency =
+        chooseFrequency(cores);
+
+    double frequencyGHz =
+        getFrequencyGHz(frequency);
+
     for (auto& process : processes)
     {
-        // Ignore processes that haven't arrived.
         if (process.arrival_time > current_time)
             continue;
 
-        // Ignore completed processes.
         if (process.remaining_time <= 0)
             continue;
 
-        // Don't schedule a process that is already running.
+        // Don't schedule a process already running.
         bool already_running = false;
 
         for (auto& core : cores)
@@ -81,21 +92,12 @@ void EnergyAwareScheduler::schedule(
         if (already_running)
             continue;
 
-        CPUCore* core = chooseCore(process, cores);
+        CPUCore* core = chooseCore(cores);
 
         if (core == nullptr)
-            continue;
+            break;
 
-        FrequencyLevel frequency =
-            chooseFrequency(process);
-
-        core->setFrequency(
-            getFrequencyGHz(frequency)
-        );
-
+        core->setFrequency(frequencyGHz);
         core->assignProcess(process.pid);
-
-        // For now we stop here.
-        // Simulator will actually execute the process.
     }
 }
