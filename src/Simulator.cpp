@@ -57,8 +57,16 @@ void Simulator::run()
         // Execute one unit of time on every busy core.
         for (auto& core : cores)
         {
+
             if (!core.isBusy())
+            {
+                core.updateUtilization(false);
                 continue;
+            }
+
+            // This core was actually executing during this tick.
+            core.updateUtilization(true);
+
 
             int pid = core.getCurrentProcess();
 

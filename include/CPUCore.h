@@ -1,6 +1,8 @@
 #ifndef CPU_CORE_H
 #define CPU_CORE_H
 
+#include <deque>
+
 class CPUCore
 {
 private:
@@ -11,6 +13,10 @@ private:
     double frequency;
     bool performance_core;
     double utilization;
+    
+    std::deque<bool> utilization_history;
+
+    static constexpr int UTILIZATION_WINDOW = 10;
 
 public:
     CPUCore(int id, bool performance_core = true);
@@ -33,8 +39,8 @@ public:
 
     double getUtilization() const;
 
-    void addUtilization(double value);
-    void removeUtilization(double value);
+    void updateUtilization(bool wasBusy);
+
 
 };
 

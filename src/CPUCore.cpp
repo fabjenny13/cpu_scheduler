@@ -61,15 +61,24 @@ double CPUCore::getUtilization() const
     return utilization;
 }
 
-void CPUCore::addUtilization(double value)
+void CPUCore::updateUtilization(bool wasBusy)
 {
-    utilization += value;
-}
+    utilization_history.push_back(wasBusy);
 
-void CPUCore::removeUtilization(double value)
-{
-    utilization -= value;
+    if (utilization_history.size() > UTILIZATION_WINDOW)
+    {
+        utilization_history.pop_front();
+    }
 
-    if (utilization < 0)
-        utilization = 0;
+    int busy_ticks = 0;
+
+    for (bool busy : utilization_history)
+    {
+        if (busy)
+            busy_ticks++;
+    }
+
+    utilization =
+        (static_cast<double>(busy_ticks) /
+         utilization_history.size()) * 100.0;
 }
