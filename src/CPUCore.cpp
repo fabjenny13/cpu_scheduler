@@ -9,6 +9,8 @@ CPUCore::CPUCore(int id, bool performance_core)
     current_process = -1;
 
     frequency = 1.0;
+
+    utilization = 0.0;
 }
 
 int CPUCore::getId() const
@@ -51,4 +53,23 @@ void CPUCore::release()
 void CPUCore::setFrequency(double frequency)
 {
     this->frequency = frequency;
+}
+
+\
+double CPUCore::getUtilization() const
+{
+    return utilization;
+}
+
+void CPUCore::addUtilization(double value)
+{
+    utilization += value;
+}
+
+void CPUCore::removeUtilization(double value)
+{
+    utilization -= value;
+
+    if (utilization < 0)
+        utilization = 0;
 }

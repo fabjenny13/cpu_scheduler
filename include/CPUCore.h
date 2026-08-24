@@ -10,6 +10,7 @@ private:
 
     double frequency;
     bool performance_core;
+    double utilization;
 
 public:
     CPUCore(int id, bool performance_core = true);
@@ -29,6 +30,12 @@ public:
     void release();
 
     void setFrequency(double frequency);
+
+    double getUtilization() const;
+
+    void addUtilization(double value);
+    void removeUtilization(double value);
+
 };
 
 #endif
