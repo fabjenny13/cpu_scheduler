@@ -5,7 +5,7 @@ double getFrequencyGHz(FrequencyLevel level)
     switch (level)
     {
         case FrequencyLevel::LOW:
-            return 1.5;
+            return 1.0;
 
         case FrequencyLevel::MEDIUM:
             return 2.0;
@@ -14,5 +14,5 @@ double getFrequencyGHz(FrequencyLevel level)
             return 3.0;
     }
 
-    return 1.5;
+    return 1.0 ;
 }

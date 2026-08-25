@@ -1,6 +1,8 @@
 #include "EnergyAwareScheduler.h"
 #include "Frequency.h"
 
+#include <iostream>
+
 FrequencyLevel EnergyAwareScheduler::chooseFrequency(
     const CPUCore& core
 ) const
@@ -82,6 +84,16 @@ void EnergyAwareScheduler::schedule(
 
         FrequencyLevel frequency =
             chooseFrequency(*core);
+
+
+        std::cout << "Time " << current_time
+          << ": P" << process.pid
+          << " -> Core " << core->getId()
+          << " | Utilization: "
+          << core->getUtilization()
+          << "% | Frequency: "
+          << getFrequencyGHz(frequency)
+          << " GHz\n";
 
         core->setFrequency(
             getFrequencyGHz(frequency)
