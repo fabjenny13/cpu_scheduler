@@ -2,58 +2,47 @@
 #include "Frequency.h"
 
 FrequencyLevel EnergyAwareScheduler::chooseFrequency(
-    const std::vector<CPUCore>& cores
+    const CPUCore& core
 ) const
 {
-    int busy_cores = 0;
+    double utilization = core.getUtilization();
 
-    for (const auto& core : cores)
-    {
-        if (core.isBusy())
-            busy_cores++;
-    }
+    if (utilization <= 30.0)
+        return FrequencyLevel::LOW;
 
-    double utilization =
-        static_cast<double>(busy_cores) / cores.size();
-
-    if (utilization >= 0.75)
-        return FrequencyLevel::HIGH;
-
-    if (utilization >= 0.50)
+    if (utilization <= 70.0)
         return FrequencyLevel::MEDIUM;
 
-    return FrequencyLevel::LOW;
+    return FrequencyLevel::HIGH;
 }
+
 
 CPUCore* EnergyAwareScheduler::chooseCore(
     std::vector<CPUCore>& cores
 ) const
 {
-    CPUCore* efficiency_core = nullptr;
-    CPUCore* performance_core = nullptr;
+    CPUCore* bestCore = nullptr;
 
     for (auto& core : cores)
     {
         if (core.isBusy())
             continue;
 
-        if (core.isPerformanceCore())
+        if (bestCore == nullptr)
         {
-            if (performance_core == nullptr)
-                performance_core = &core;
+            bestCore = &core;
+            continue;
         }
-        else
+
+        // Choose the less utilized core.
+        if (core.getUtilization() <
+            bestCore->getUtilization())
         {
-            if (efficiency_core == nullptr)
-                efficiency_core = &core;
+            bestCore = &core;
         }
     }
 
-    // Prefer efficiency cores to save energy.
-    if (efficiency_core != nullptr)
-        return efficiency_core;
-
-    return performance_core;
+    return bestCore;
 }
 
 
@@ -62,12 +51,6 @@ void EnergyAwareScheduler::schedule(
     std::vector<CPUCore>& cores,
     int current_time)
 {
-    FrequencyLevel frequency =
-        chooseFrequency(cores);
-
-    double frequencyGHz =
-        getFrequencyGHz(frequency);
-
     for (auto& process : processes)
     {
         if (process.arrival_time > current_time)
@@ -97,7 +80,12 @@ void EnergyAwareScheduler::schedule(
         if (core == nullptr)
             break;
 
-        core->setFrequency(frequencyGHz);
+        FrequencyLevel frequency =
+            chooseFrequency(*core);
+
+        core->setFrequency(
+            getFrequencyGHz(frequency)
+        );
         core->assignProcess(process.pid);
     }
 }
