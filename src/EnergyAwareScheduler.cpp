@@ -1,5 +1,6 @@
 #include "EnergyAwareScheduler.h"
 #include "Frequency.h"
+#include "PowerModel.h"
 
 #include <iostream>
 
@@ -85,6 +86,9 @@ void EnergyAwareScheduler::schedule(
         FrequencyLevel frequency =
             chooseFrequency(*core);
 
+        double frequencyGHz = getFrequencyGHz(frequency);
+
+        double power = PowerModel::getPower(frequencyGHz);
 
         std::cout << "Time " << current_time
           << ": P" << process.pid
@@ -93,7 +97,9 @@ void EnergyAwareScheduler::schedule(
           << core->getUtilization()
           << "% | Frequency: "
           << getFrequencyGHz(frequency)
-          << " GHz\n";
+          << " GHz\n"
+          << power
+          << " W\n";
 
         core->setFrequency(
             getFrequencyGHz(frequency)
