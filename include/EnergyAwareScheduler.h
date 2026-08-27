@@ -2,7 +2,6 @@
 #define ENERGY_AWARE_SCHEDULER_H
 
 #include "Scheduler.h"
-#include "SchedulingDecision.h"
 
 class EnergyAwareScheduler : public Scheduler
 {
