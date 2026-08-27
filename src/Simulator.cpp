@@ -1,4 +1,6 @@
 #include "Simulator.h"
+#include "PowerModel.h"
+#include <iostream>
 
 Simulator::Simulator(
     const std::vector<Process>& processes,
@@ -67,6 +69,13 @@ void Simulator::run()
             // This core was actually executing during this tick.
             core.updateUtilization(true);
 
+            double power = PowerModel::getPower(core.getFrequency());
+
+            double energy = PowerModel::calculateEnergy(power, 1.0);
+
+            core.addEnergy(energy);
+
+
 
             int pid = core.getCurrentProcess();
 
@@ -100,6 +109,25 @@ void Simulator::run()
 
         current_time++;
     }
+
+
+
+    double total_energy = 0.0;
+
+    for (const auto& core : cores)
+    {
+        std::cout << "Core "
+                  << core.getId()
+                  << " Energy: "
+                  << core.getTotalEnergy()
+                  << " J\n";
+
+        total_energy += core.getTotalEnergy();
+    }
+
+    std::cout << "Total Energy: "
+              << total_energy
+              << " J\n";
 }
 
 int Simulator::getCurrentTime() const

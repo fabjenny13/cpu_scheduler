@@ -11,6 +11,8 @@ CPUCore::CPUCore(int id, bool performance_core)
     frequency = 1.0;
 
     utilization = 0.0;
+
+    total_energy = 0.0;
 }
 
 int CPUCore::getId() const
@@ -81,4 +83,14 @@ void CPUCore::updateUtilization(bool wasBusy)
     utilization =
         (static_cast<double>(busy_ticks) /
          utilization_history.size()) * 100.0;
+}
+
+double CPUCore::getTotalEnergy() const
+{
+    return total_energy;
+}
+
+void CPUCore::addEnergy(double energy)
+{
+    total_energy += energy;
 }

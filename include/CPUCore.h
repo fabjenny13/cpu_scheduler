@@ -13,6 +13,8 @@ private:
     double frequency;
     bool performance_core;
     double utilization;
+
+    double total_energy;
     
     std::deque<bool> utilization_history;
 
@@ -41,6 +43,9 @@ public:
 
     void updateUtilization(bool wasBusy);
 
+    double getTotalEnergy() const;
+
+    void addEnergy(double energy);
 
 };
 
