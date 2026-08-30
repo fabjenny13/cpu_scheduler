@@ -1,4 +1,4 @@
-#include "WorkloadEnergyAwareScheduler.h"
+#include "WorkloadEnergyAware.h"
 #include "Frequency.h"
 #include "PowerModel.h"
 
