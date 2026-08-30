@@ -2,7 +2,7 @@
 #include <vector>
 
 #include "Process.h"
-#include "WorkloadEnergyAwareScheduler.h"
+#include "WorkloadEnergyAware.h"
 #include "Simulator.h"
 #include "Metrics.h"
 
