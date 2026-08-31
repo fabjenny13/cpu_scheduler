@@ -27,6 +27,7 @@ public:
 
     int getCurrentTime() const;
     const std::vector<Process>& getProcesses() const;
+    void setBaselineFrequency(std::vector<CPUCore>& cores);
 };
 
 #endif

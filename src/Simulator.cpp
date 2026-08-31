@@ -8,7 +8,6 @@ Simulator::Simulator(
     Scheduler* scheduler)
 {
     this->processes = processes;
-    this->processes = processes;
 
     for (auto& process : this->processes)
     {
@@ -25,6 +24,20 @@ Simulator::Simulator(
         bool performance = (i < number_of_cores / 2);
 
         cores.emplace_back(i, performance);
+    }
+
+    if (!scheduler->controlsFrequency())
+    {
+        setBaselineFrequency(cores);
+    }
+}
+
+void Simulator::setBaselineFrequency(
+    std::vector<CPUCore>& cores)
+{
+    for (auto& core : cores)
+    {
+        core.setFrequency(3.0);
     }
 }
 

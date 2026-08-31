@@ -21,6 +21,12 @@ public:
         std::vector<CPUCore>& cores,
         int current_time
     ) override;
+
+    bool controlsFrequency() const override
+    {
+        return true;
+    }
+    
 };
 
 #endif
