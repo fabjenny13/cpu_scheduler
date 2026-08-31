@@ -19,7 +19,6 @@ int main()
         {4, 3, 6, 6, -1, -1, 0, 0, 0, WorkloadType::INTERACTIVE}
     };
 
-    // auto sjf_processes = processes;
     // auto rr_processes = processes;
 
     FCFS fcfs;
@@ -35,7 +34,18 @@ int main()
     printResults(fcfs_simulator.getProcesses(), "FCFS");
 
 
-    // sjf(sjf_processes);
+    SJF sjf;
+
+    Simulator sjf_simulator(
+        processes,
+        2,
+        &sjf
+    );
+
+    sjf_simulator.run();
+
+    printResults(sjf_simulator.getProcesses(), "SJF");
+
     // roundRobin(rr_processes, 2);
 
     // printResults(sjf_processes, "SJF");
