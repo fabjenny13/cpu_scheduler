@@ -1,9 +1,16 @@
 #ifndef FCFS_H
 #define FCFS_H
 
-#include <vector>
-#include "Process.h"
+#include "Scheduler.h"
 
-void fcfs(std::vector<Process>& processes);
+class FCFS : public Scheduler
+{
+public:
+    void schedule(
+        std::vector<Process>& processes,
+        std::vector<CPUCore>& cores,
+        int current_time
+    ) override;
+};
 
 #endif
