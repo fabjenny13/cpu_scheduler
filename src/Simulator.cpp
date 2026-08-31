@@ -97,6 +97,15 @@ void Simulator::run()
                 if (process.pid != pid)
                     continue;
 
+
+                
+                if (process.start_time == -1)
+                {
+                    process.start_time = current_time;
+                
+                    process.response_time = process.start_time - process.arrival_time;
+                }
+
                 process.remaining_time--;
 
                 // Process finished.
