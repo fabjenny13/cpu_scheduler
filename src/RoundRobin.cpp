@@ -1,5 +1,4 @@
 #include "RoundRobin.h"
-#include <queue>
 
 RoundRobin::RoundRobin(int quantum)
 {
@@ -11,46 +10,63 @@ void RoundRobin::schedule(
     std::vector<CPUCore>& cores,
     int current_time)
 {
-    // Find processes that are ready and not currently running.
-    std::vector<int> ready;
-
-    for (int i = 0; i < processes.size(); i++)
+    // Add newly arrived processes to the ready queue
+    for (auto& process : processes)
     {
-        if (processes[i].arrival_time <= current_time &&
-            processes[i].remaining_time > 0)
+        if (process.arrival_time <= current_time &&
+            process.remaining_time > 0 &&
+            inQueue.find(process.pid) == inQueue.end())
         {
-            bool already_running = false;
+            bool alreadyRunning = false;
 
             for (const auto& core : cores)
             {
                 if (core.isBusy() &&
-                    core.getCurrentProcess() == processes[i].pid)
+                    core.getCurrentProcess() == process.pid)
                 {
-                    already_running = true;
+                    alreadyRunning = true;
                     break;
                 }
             }
 
-            if (!already_running)
-                ready.push_back(i);
+            if (!alreadyRunning)
+            {
+                readyQueue.push(process.pid);
+                inQueue.insert(process.pid);
+            }
         }
     }
 
-    // Assign ready processes to free cores.
-    int next = 0;
+    // First handle processes whose quantum has expired
+    for (auto& core : cores)
+    {
+        if (!core.isBusy())
+            continue;
 
+        if (core.getTimeSlice() >= quantum)
+        {
+            int pid = core.getCurrentProcess();
+
+            readyQueue.push(pid);
+            inQueue.insert(pid);
+
+            core.release();
+        }
+    }
+
+    // Assign ready processes to free cores
     for (auto& core : cores)
     {
         if (core.isBusy())
             continue;
 
-        if (next >= ready.size())
+        if (readyQueue.empty())
             break;
 
-        int index = ready[next];
+        int pid = readyQueue.front();
+        readyQueue.pop();
+        inQueue.erase(pid);
 
-        core.assignProcess(processes[index].pid);
-
-        next++;
+        core.assignProcess(pid);
     }
 }

@@ -3,9 +3,15 @@
 
 #include "Scheduler.h"
 
+#include <set>
+#include <queue>
+
 class RoundRobin : public Scheduler
 {
 private:
+    std::queue<int> readyQueue;
+    std::set<int> inQueue;
+
     int quantum;
 
 public:
