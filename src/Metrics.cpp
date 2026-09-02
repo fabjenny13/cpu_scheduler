@@ -80,7 +80,7 @@ void printResults(
                   << totalTurnaround / n << '\n';
 
         std::cout << "Average Response Time: "
-                  << totalResponse / n << '\n\n';
+                  << totalResponse / n << "\n\n";
     }
 
         std::cout << "==========================================\n";
