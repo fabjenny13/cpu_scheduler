@@ -46,11 +46,20 @@ int main()
 
     printResults(sjf_simulator.getProcesses(), "SJF");
 
-    // roundRobin(rr_processes, 2);
+   
+    RoundRobin rr(2);
 
-    // printResults(sjf_processes, "SJF");
-    // printResults(rr_processes, "Round Robin");
+    Simulator rr_simulator(
+        processes,
+        2,
+        &rr
+    );
 
+    rr_simulator.run();
+
+    printResults(rr_simulator.getProcesses(), "Round Robin");
+
+    
     EnergyAwareScheduler energy;
 
     Simulator energy_simulator(

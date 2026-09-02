@@ -1,9 +1,21 @@
 #ifndef ROUND_ROBIN_H
 #define ROUND_ROBIN_H
 
-#include <vector>
-#include "Process.h"
+#include "Scheduler.h"
 
-void roundRobin(std::vector<Process>& processes, int quantum);
+class RoundRobin : public Scheduler
+{
+private:
+    int quantum;
+
+public:
+    RoundRobin(int quantum);
+
+    void schedule(
+        std::vector<Process>& processes,
+        std::vector<CPUCore>& cores,
+        int current_time
+    ) override;
+};
 
 #endif

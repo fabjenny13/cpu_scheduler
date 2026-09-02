@@ -1,85 +1,56 @@
 #include "RoundRobin.h"
-#include <algorithm>
 #include <queue>
 
-void roundRobin(std::vector<Process>& processes, int quantum)
+RoundRobin::RoundRobin(int quantum)
 {
-    int n = processes.size();
+    this->quantum = quantum;
+}
 
-    for (auto& p : processes)
-        p.remaining_time = p.burst_time;
+void RoundRobin::schedule(
+    std::vector<Process>& processes,
+    std::vector<CPUCore>& cores,
+    int current_time)
+{
+    // Find processes that are ready and not currently running.
+    std::vector<int> ready;
 
-    std::sort(processes.begin(), processes.end(),
-        [](const Process& a, const Process& b)
-        {
-            return a.arrival_time < b.arrival_time;
-        });
-
-    std::queue<int> ready_queue;
-
-    int current_time = 0;
-    int completed = 0;
-    int next_process = 0;
-
-    while (completed < n)
+    for (int i = 0; i < processes.size(); i++)
     {
-        // Add processes that have arrived.
-        while (next_process < n &&
-               processes[next_process].arrival_time <= current_time)
+        if (processes[i].arrival_time <= current_time &&
+            processes[i].remaining_time > 0)
         {
-            ready_queue.push(next_process);
-            next_process++;
-        }
+            bool already_running = false;
 
-        // If nothing is ready, jump to the next arrival.
-        if (ready_queue.empty())
-        {
-            current_time = processes[next_process].arrival_time;
+            for (const auto& core : cores)
+            {
+                if (core.isBusy() &&
+                    core.getCurrentProcess() == processes[i].pid)
+                {
+                    already_running = true;
+                    break;
+                }
+            }
+
+            if (!already_running)
+                ready.push_back(i);
+        }
+    }
+
+    // Assign ready processes to free cores.
+    int next = 0;
+
+    for (auto& core : cores)
+    {
+        if (core.isBusy())
             continue;
-        }
 
-        int index = ready_queue.front();
-        ready_queue.pop();
+        if (next >= ready.size())
+            break;
 
-        Process& p = processes[index];
+        int index = ready[next];
 
-        // First time this process gets CPU.
-        if (p.start_time == -1)
-        {
-            p.start_time = current_time;
-            p.response_time =
-                p.start_time - p.arrival_time;
-        }
+        core.assignProcess(processes[index].pid);
 
-        int execution_time =
-            std::min(quantum, p.remaining_time);
-
-        p.remaining_time -= execution_time;
-        current_time += execution_time;
-
-        // Add processes that arrived during execution.
-        while (next_process < n &&
-               processes[next_process].arrival_time <= current_time)
-        {
-            ready_queue.push(next_process);
-            next_process++;
-        }
-
-        if (p.remaining_time > 0)
-        {
-            ready_queue.push(index);
-        }
-        else
-        {
-            p.completion_time = current_time;
-
-            p.turnaround_time =
-                p.completion_time - p.arrival_time;
-
-            p.waiting_time =
-                p.turnaround_time - p.burst_time;
-
-            completed++;
-        }
+        next++;
     }
 }
