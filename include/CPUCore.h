@@ -15,6 +15,8 @@ private:
     double utilization;
 
     double total_energy;
+
+    int time_slice;
     
     std::deque<bool> utilization_history;
 
@@ -46,6 +48,10 @@ public:
     double getTotalEnergy() const;
 
     void addEnergy(double energy);
+
+    int getTimeSlice() const;
+    void incrementTimeSlice();
+    void resetTimeSlice();
 
 };
 
