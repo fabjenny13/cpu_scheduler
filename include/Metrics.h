@@ -2,12 +2,24 @@
 #define METRICS_H
 
 #include <vector>
-#include <string>
 #include "Process.h"
 
-void printResults(
+struct Metrics
+{
+    double averageWaitingTime;
+    double averageTurnaroundTime;
+    double averageResponseTime;
+    double totalEnergy;
+};
+
+Metrics calculateMetrics(
     const std::vector<Process>& processes,
-    const std::string& title
+    double totalEnergy
+);
+
+void printMetrics(
+    const std::vector<Process>& processes,
+    double totalEnergy
 );
 
 #endif
