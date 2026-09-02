@@ -23,7 +23,7 @@ public:
         Scheduler* scheduler
     );
 
-    void run();
+    double run();
 
     int getCurrentTime() const;
     const std::vector<Process>& getProcesses() const;

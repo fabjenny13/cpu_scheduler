@@ -29,7 +29,7 @@ int main()
         &fcfs
     );
 
-    fcfs_simulator.run();
+    double fcfs_energy = fcfs_simulator.run();
 
     printResults(fcfs_simulator.getProcesses(), "FCFS");
 
@@ -42,7 +42,7 @@ int main()
         &sjf
     );
 
-    sjf_simulator.run();
+    double sjf_energy = sjf_simulator.run();
 
     printResults(sjf_simulator.getProcesses(), "SJF");
 
@@ -55,7 +55,7 @@ int main()
         &rr
     );
 
-    rr_simulator.run();
+    double rr_energy = rr_simulator.run();
 
     printResults(rr_simulator.getProcesses(), "Round Robin");
 
@@ -68,12 +68,27 @@ int main()
         &energy
     );
 
-    energy_simulator.run();
+    double energy_energy = energy_simulator.run();
 
     printResults(
         energy_simulator.getProcesses(),
         "Energy Aware Scheduler"
     );
+
+
+    std::cout << "\n===== FINAL COMPARISON =====\n";
+
+std::cout << "FCFS Energy: "
+          << fcfs_energy << " J\n";
+
+std::cout << "SJF Energy: "
+          << sjf_energy  << " J\n";
+
+std::cout << "RR Energy: "
+          << rr_energy << " J\n";
+
+std::cout << "Energy-Aware Energy: "
+          << energy_energy << " J\n";
 
     return 0;
 }

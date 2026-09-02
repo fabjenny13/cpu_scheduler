@@ -41,7 +41,7 @@ void Simulator::setBaselineFrequency(
     }
 }
 
-void Simulator::run()
+double Simulator::run()
 {
     bool processes_remaining = true;
 
@@ -140,6 +140,8 @@ void Simulator::run()
 
     double total_energy = 0.0;
 
+
+    std::cout << "==========================================\n";
     for (const auto& core : cores)
     {
         std::cout << "Core "
@@ -154,6 +156,8 @@ void Simulator::run()
     std::cout << "Total Energy: "
               << total_energy
               << " J\n";
+
+    return total_energy;
 }
 
 int Simulator::getCurrentTime() const
