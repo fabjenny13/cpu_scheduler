@@ -52,6 +52,7 @@ void CPUCore::release()
 {
     current_process = -1;
     busy = false;
+    time_slice = 0;
 }
 
 void CPUCore::setFrequency(double frequency)

@@ -124,6 +124,10 @@ void Simulator::run()
 
                     core.release();
                 }
+                else
+                {
+                    core.incrementTimeSlice();
+                }
 
                 break;
             }
