@@ -27,28 +27,6 @@ Metrics calculateMetrics(
     return result;
 }
 
-void printMetrics(
-    const std::vector<Process>& processes,
-    double totalEnergy)
-{
-    Metrics metrics =
-        calculateMetrics(processes, totalEnergy);
-
-    std::cout << std::fixed << std::setprecision(2);
-
-    std::cout << "Average Waiting Time: "
-              << metrics.averageWaitingTime << '\n';
-
-    std::cout << "Average Turnaround Time: "
-              << metrics.averageTurnaroundTime << '\n';
-
-    std::cout << "Average Response Time: "
-              << metrics.averageResponseTime << '\n';
-
-    std::cout << "Total Energy: "
-              << metrics.totalEnergy << " J\n";
-}
-
 
 void printResults(
     const std::vector<Process>& processes,
@@ -102,6 +80,9 @@ void printResults(
                   << totalTurnaround / n << '\n';
 
         std::cout << "Average Response Time: "
-                  << totalResponse / n << '\n';
+                  << totalResponse / n << '\n\n';
     }
+
+        std::cout << "==========================================\n";
+
 }

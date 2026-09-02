@@ -140,6 +140,8 @@ double Simulator::run()
 
     double total_energy = 0.0;
 
+
+    std::cout << "==========================================\n";
     for (const auto& core : cores)
     {
         std::cout << "Core "

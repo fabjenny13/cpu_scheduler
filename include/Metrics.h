@@ -19,11 +19,6 @@ Metrics calculateMetrics(
     double totalEnergy
 );
 
-void printMetrics(
-    const std::vector<Process>& processes,
-    double totalEnergy
-);
-
 
 void printResults(
     const std::vector<Process>& processes,
