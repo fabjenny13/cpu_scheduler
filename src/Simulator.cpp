@@ -8,7 +8,6 @@ Simulator::Simulator(
     Scheduler* scheduler)
 {
     this->processes = processes;
-    this->processes = processes;
 
     for (auto& process : this->processes)
     {
@@ -26,9 +25,23 @@ Simulator::Simulator(
 
         cores.emplace_back(i, performance);
     }
+
+    if (!scheduler->controlsFrequency())
+    {
+        setBaselineFrequency(cores);
+    }
 }
 
-void Simulator::run()
+void Simulator::setBaselineFrequency(
+    std::vector<CPUCore>& cores)
+{
+    for (auto& core : cores)
+    {
+        core.setFrequency(3.0);
+    }
+}
+
+double Simulator::run()
 {
     bool processes_remaining = true;
 
@@ -84,6 +97,15 @@ void Simulator::run()
                 if (process.pid != pid)
                     continue;
 
+
+                
+                if (process.start_time == -1)
+                {
+                    process.start_time = current_time;
+                
+                    process.response_time = process.start_time - process.arrival_time;
+                }
+
                 process.remaining_time--;
 
                 // Process finished.
@@ -102,6 +124,10 @@ void Simulator::run()
 
                     core.release();
                 }
+                else
+                {
+                    core.incrementTimeSlice();
+                }
 
                 break;
             }
@@ -114,6 +140,8 @@ void Simulator::run()
 
     double total_energy = 0.0;
 
+
+    std::cout << "==========================================\n";
     for (const auto& core : cores)
     {
         std::cout << "Core "
@@ -128,6 +156,8 @@ void Simulator::run()
     std::cout << "Total Energy: "
               << total_energy
               << " J\n";
+
+    return total_energy;
 }
 
 int Simulator::getCurrentTime() const

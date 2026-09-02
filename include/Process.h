@@ -18,9 +18,9 @@ struct Process {
     int start_time = -1;
     int completion_time = -1;
 
-    int waiting_time = 0;
-    int turnaround_time = 0;
-    int response_time = 0;
+    int waiting_time = -1;
+    int turnaround_time = -1;
+    int response_time = -1;
 
     WorkloadType workload;
 

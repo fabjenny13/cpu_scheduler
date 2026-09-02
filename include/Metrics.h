@@ -3,11 +3,26 @@
 
 #include <vector>
 #include <string>
+
 #include "Process.h"
+
+struct Metrics
+{
+    double averageWaitingTime;
+    double averageTurnaroundTime;
+    double averageResponseTime;
+    double totalEnergy;
+};
+
+Metrics calculateMetrics(
+    const std::vector<Process>& processes,
+    double totalEnergy
+);
+
 
 void printResults(
     const std::vector<Process>& processes,
-    const std::string& title
+    const std::string& schedulerName
 );
 
 #endif

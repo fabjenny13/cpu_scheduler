@@ -15,6 +15,11 @@ public:
         int current_time
     ) = 0;
 
+    virtual bool controlsFrequency() const
+    {
+        return false;
+    }
+
     virtual ~Scheduler() = default;
 };
 
