@@ -1,70 +1,59 @@
 #include "SJF.h"
 #include <climits>
 
-void sjf(std::vector<Process>& processes)
+void SJF::schedule(
+    std::vector<Process>& processes,
+    std::vector<CPUCore>& cores,
+    int current_time)
 {
-    int n = processes.size();
+    std::vector<bool> assigned(processes.size(), false);
 
-    std::vector<bool> completed(n, false);
-
-    int completed_count = 0;
-    int current_time = 0;
-
-    while (completed_count < n)
+    for (auto& core : cores)
     {
+        if (core.isBusy())
+            continue;
+
         int selected = -1;
         int shortest_burst = INT_MAX;
 
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < processes.size(); i++)
         {
-            if (!completed[i] &&
-                processes[i].arrival_time <= current_time &&
-                processes[i].burst_time < shortest_burst)
+            if (assigned[i])
+                continue;
+
+            if (processes[i].arrival_time > current_time)
+                continue;
+
+            if (processes[i].remaining_time <= 0)
+                continue;
+
+            // Don't assign a process already running on another core.
+            bool already_running = false;
+
+            for (const auto& other_core : cores)
+            {
+                if (other_core.isBusy() &&
+                    other_core.getCurrentProcess() == processes[i].pid)
+                {
+                    already_running = true;
+                    break;
+                }
+            }
+
+            if (already_running)
+                continue;
+
+            if (processes[i].burst_time < shortest_burst)
             {
                 shortest_burst = processes[i].burst_time;
                 selected = i;
             }
         }
 
-        // No process has arrived yet.
         if (selected == -1)
-        {
-            int next_arrival = INT_MAX;
-
-            for (int i = 0; i < n; i++)
-            {
-                if (!completed[i])
-                    next_arrival =
-                        std::min(next_arrival, processes[i].arrival_time);
-            }
-
-            current_time = next_arrival;
             continue;
-        }
 
-        // Execute selected process.
-        if (processes[selected].start_time == -1)
-        {
-            processes[selected].start_time = current_time;
-        }
-
-        current_time += processes[selected].burst_time;
-
-        processes[selected].completion_time = current_time;
-
-        processes[selected].turnaround_time =
-            processes[selected].completion_time -
-            processes[selected].arrival_time;
-
-        processes[selected].waiting_time =
-            processes[selected].turnaround_time -
-            processes[selected].burst_time;
-
-        processes[selected].response_time =
-            processes[selected].start_time -
-            processes[selected].arrival_time;
-
-        completed[selected] = true;
-        completed_count++;
+        core.assignProcess(processes[selected].pid);
+        assigned[selected] = true;
     }
 }

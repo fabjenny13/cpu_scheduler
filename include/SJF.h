@@ -1,9 +1,16 @@
 #ifndef SJF_H
 #define SJF_H
 
-#include <vector>
-#include "Process.h"
+#include "Scheduler.h"
 
-void sjf(std::vector<Process>& processes);
+class SJF : public Scheduler
+{
+public:
+    void schedule(
+        std::vector<Process>& processes,
+        std::vector<CPUCore>& cores,
+        int current_time
+    ) override;
+};
 
 #endif

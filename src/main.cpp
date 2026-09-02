@@ -19,30 +19,59 @@ int main()
         {4, 3, 6, 6, -1, -1, 0, 0, 0, WorkloadType::INTERACTIVE}
     };
 
-    auto fcfs_processes = processes;
-    auto sjf_processes = processes;
-    auto rr_processes = processes;
+    // auto rr_processes = processes;
 
-    fcfs(fcfs_processes);
-    sjf(sjf_processes);
-    roundRobin(rr_processes, 2);
+    FCFS fcfs;
 
-    printResults(fcfs_processes, "FCFS");
-    printResults(sjf_processes, "SJF");
-    printResults(rr_processes, "Round Robin");
-
-    EnergyAwareScheduler scheduler;
-
-    Simulator simulator(
+    Simulator fcfs_simulator(
         processes,
         2,
-        &scheduler
+        &fcfs
     );
 
-    simulator.run();
+    fcfs_simulator.run();
+
+    printResults(fcfs_simulator.getProcesses(), "FCFS");
+
+
+    SJF sjf;
+
+    Simulator sjf_simulator(
+        processes,
+        2,
+        &sjf
+    );
+
+    sjf_simulator.run();
+
+    printResults(sjf_simulator.getProcesses(), "SJF");
+
+   
+    RoundRobin rr(2);
+
+    Simulator rr_simulator(
+        processes,
+        2,
+        &rr
+    );
+
+    rr_simulator.run();
+
+    printResults(rr_simulator.getProcesses(), "Round Robin");
+
+    
+    EnergyAwareScheduler energy;
+
+    Simulator energy_simulator(
+        processes,
+        2,
+        &energy
+    );
+
+    energy_simulator.run();
 
     printResults(
-        simulator.getProcesses(),
+        energy_simulator.getProcesses(),
         "Energy Aware Scheduler"
     );
 

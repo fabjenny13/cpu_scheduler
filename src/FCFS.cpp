@@ -1,26 +1,48 @@
 #include "FCFS.h"
-#include <algorithm>
 
-void fcfs(std::vector<Process>& processes)
+void FCFS::schedule(
+    std::vector<Process>& processes,
+    std::vector<CPUCore>& cores,
+    int current_time)
 {
-    std::sort(processes.begin(), processes.end(),
-        [](const Process& a, const Process& b)
-        {
-            return a.arrival_time < b.arrival_time;
-        });
-
-    int current_time = 0;
-
-    for (auto& p : processes)
+    for (auto& core : cores)
     {
-        if (current_time < p.arrival_time)
-            current_time = p.arrival_time;
+        if (core.isBusy())
+            continue;
 
-        current_time += p.burst_time;
+        int selected = -1;
 
-        p.completion_time = current_time;
-        p.turnaround_time = p.completion_time - p.arrival_time;
-        p.waiting_time = p.turnaround_time - p.burst_time;
-        p.response_time = p.waiting_time;
+        for (int i = 0; i < processes.size(); i++)
+        {
+            if (processes[i].arrival_time > current_time)
+                continue;
+
+            if (processes[i].remaining_time <= 0)
+                continue;
+
+            // Check whether this process is already running.
+            bool already_running = false;
+
+            for (const auto& other_core : cores)
+            {
+                if (other_core.isBusy() &&
+                    other_core.getCurrentProcess() == processes[i].pid)
+                {
+                    already_running = true;
+                    break;
+                }
+            }
+
+            if (already_running)
+                continue;
+
+            selected = i;
+            break;
+        }
+
+        if (selected == -1)
+            continue;
+
+        core.assignProcess(processes[selected].pid);
     }
 }

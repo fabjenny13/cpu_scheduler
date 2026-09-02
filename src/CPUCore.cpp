@@ -13,6 +13,7 @@ CPUCore::CPUCore(int id, bool performance_core)
     utilization = 0.0;
 
     total_energy = 0.0;
+    time_slice = 0;
 }
 
 int CPUCore::getId() const
@@ -44,12 +45,14 @@ void CPUCore::assignProcess(int pid)
 {
     current_process = pid;
     busy = true;
+    time_slice = 0;
 }
 
 void CPUCore::release()
 {
     current_process = -1;
     busy = false;
+    time_slice = 0;
 }
 
 void CPUCore::setFrequency(double frequency)
@@ -93,4 +96,20 @@ double CPUCore::getTotalEnergy() const
 void CPUCore::addEnergy(double energy)
 {
     total_energy += energy;
+}
+
+
+int CPUCore::getTimeSlice() const
+{
+    return time_slice;
+}
+
+void CPUCore::incrementTimeSlice()
+{
+    time_slice++;
+}
+
+void CPUCore::resetTimeSlice()
+{
+    time_slice = 0;
 }
