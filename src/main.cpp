@@ -1,13 +1,36 @@
 #include <iostream>
+#include <iomanip>
+#include <string>
 #include <vector>
+#include <algorithm>
 
 #include "Process.h"
 #include "FCFS.h"
 #include "SJF.h"
 #include "RoundRobin.h"
+#include "WorkloadEnergyAware.h"
 #include "EnergyAwareScheduler.h"
 #include "Simulator.h"
 #include "Metrics.h"
+
+namespace
+{
+
+void printComparisonRow(
+    const std::string& name,
+    const Metrics& m)
+{
+    std::cout << std::left << std::setw(24) << name
+              << std::right
+              << std::fixed << std::setprecision(2)
+              << std::setw(12) << m.averageWaitingTime
+              << std::setw(14) << m.averageTurnaroundTime
+              << std::setw(12) << m.averageResponseTime
+              << std::setw(14) << m.totalEnergy
+              << '\n';
+}
+
+}
 
 int main()
 {
@@ -19,76 +42,63 @@ int main()
         {4, 3, 6, 6, -1, -1, 0, 0, 0, WorkloadType::INTERACTIVE}
     };
 
-    // auto rr_processes = processes;
-
     FCFS fcfs;
-
-    Simulator fcfs_simulator(
-        processes,
-        2,
-        &fcfs
-    );
-
-    double fcfs_energy = fcfs_simulator.run();
-
-    printResults(fcfs_simulator.getProcesses(), "FCFS");
-
+    Simulator fcfsSimulator(processes, 2, &fcfs);
+    double fcfsEnergy = fcfsSimulator.run();
+    Metrics fcfsMetrics = calculateMetrics(fcfsSimulator.getProcesses(), fcfsEnergy);
+    printResults(fcfsSimulator.getProcesses(), "FCFS");
 
     SJF sjf;
+    Simulator sjfSimulator(processes, 2, &sjf);
+    double sjfEnergy = sjfSimulator.run();
+    Metrics sjfMetrics = calculateMetrics(sjfSimulator.getProcesses(), sjfEnergy);
+    printResults(sjfSimulator.getProcesses(), "SJF");
 
-    Simulator sjf_simulator(
-        processes,
-        2,
-        &sjf
-    );
-
-    double sjf_energy = sjf_simulator.run();
-
-    printResults(sjf_simulator.getProcesses(), "SJF");
-
-   
     RoundRobin rr(2);
+    Simulator rrSimulator(processes, 2, &rr);
+    double rrEnergy = rrSimulator.run();
+    Metrics rrMetrics = calculateMetrics(rrSimulator.getProcesses(), rrEnergy);
+    printResults(rrSimulator.getProcesses(), "Round Robin");
 
-    Simulator rr_simulator(
-        processes,
-        2,
-        &rr
-    );
+    EnergyAwareScheduler energyScheduler;
+    Simulator energySimulator(processes, 2, &energyScheduler);
+    double energyEnergy = energySimulator.run();
+    Metrics energyMetrics = calculateMetrics(energySimulator.getProcesses(), energyEnergy);
+    printResults(energySimulator.getProcesses(), "Energy Aware Scheduler");
 
-    double rr_energy = rr_simulator.run();
+    WorkloadEnergyAwareScheduler workloadScheduler;
+    Simulator workloadSimulator(processes, 2, &workloadScheduler);
+    double workloadEnergy = workloadSimulator.run();
+    Metrics workloadMetrics = calculateMetrics(workloadSimulator.getProcesses(), workloadEnergy);
+    printResults(workloadSimulator.getProcesses(), "Workload Energy Aware Scheduler");
 
-    printResults(rr_simulator.getProcesses(), "Round Robin");
+    std::cout << "\n===== SCHEDULER COMPARISON =====\n";
+    std::cout << std::left << std::setw(24) << "Scheduler"
+              << std::right
+              << std::setw(12) << "AvgWait"
+              << std::setw(14) << "AvgTurnaround"
+              << std::setw(12) << "AvgResponse"
+              << std::setw(14) << "Energy(J)"
+              << '\n';
 
-    
-    EnergyAwareScheduler energy;
+    printComparisonRow("FCFS", fcfsMetrics);
+    printComparisonRow("SJF", sjfMetrics);
+    printComparisonRow("Round Robin", rrMetrics);
+    printComparisonRow("Energy Aware", energyMetrics);
+    printComparisonRow("Workload Energy Aware", workloadMetrics);
 
-    Simulator energy_simulator(
-        processes,
-        2,
-        &energy
-    );
+    double bestBaselineEnergy = std::min({fcfsMetrics.totalEnergy, sjfMetrics.totalEnergy, rrMetrics.totalEnergy, energyMetrics.totalEnergy});
 
-    double energy_energy = energy_simulator.run();
+    if (bestBaselineEnergy > 0.0)
+    {
+        double savingsPercent =
+            100.0 * (bestBaselineEnergy - workloadMetrics.totalEnergy) / bestBaselineEnergy;
 
-    printResults(
-        energy_simulator.getProcesses(),
-        "Energy Aware Scheduler"
-    );
-
-
-    std::cout << "\n===== FINAL COMPARISON =====\n";
-
-std::cout << "FCFS Energy: "
-          << fcfs_energy << " J\n";
-
-std::cout << "SJF Energy: "
-          << sjf_energy  << " J\n";
-
-std::cout << "RR Energy: "
-          << rr_energy << " J\n";
-
-std::cout << "Energy-Aware Energy: "
-          << energy_energy << " J\n";
+        std::cout << "\nWorkload-aware scheduler uses "
+                  << std::fixed << std::setprecision(1)
+                  << savingsPercent
+                  << "% less energy than the best baseline scheduler.\n";
+    }
 
     return 0;
 }
