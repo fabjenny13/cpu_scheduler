@@ -9,15 +9,20 @@ class WorkloadEnergyAwareScheduler : public Scheduler
 private:
     FrequencyLevel chooseFrequency(
         const CPUCore& core,
-        WorkloadType workload
+        const Process& process
     ) const;
 
     CPUCore* chooseCore(
         std::vector<CPUCore>& cores,
-        WorkloadType workload
+        const Process& process
     ) const;
 
 public:
+bool controlsFrequency() const override
+{
+    return true;
+}
+
     void schedule(
         std::vector<Process>& processes,
         std::vector<CPUCore>& cores,

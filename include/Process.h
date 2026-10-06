@@ -31,7 +31,7 @@ struct Process
     double io_wait;
     int priority;
 
-    WorkloadType workload;
+    WorkloadType workload_type;
 };
 
 #endif

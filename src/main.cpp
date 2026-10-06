@@ -36,6 +36,21 @@ void printComparisonRow(
 int main()
 {
     std::vector<Process> processes = DatasetLoader::loadCSV("data/synthetic_2000.csv");
+
+//     std::vector<Process> processes =
+// {
+//     {1, 0, 10, 10, -1, -1, 0, 0, -1,
+//      95.0, 5.0, 5, WorkloadType::CPU_BOUND},
+
+//     {2, 0, 10, 10, -1, -1, 0, 0, -1,
+//      20.0, 85.0, 5, WorkloadType::IO_BOUND},
+
+//     {3, 0, 5, 5, -1, -1, 0, 0, -1,
+//      60.0, 30.0, 1, WorkloadType::INTERACTIVE},
+
+//     {4, 0, 20, 20, -1, -1, 0, 0, -1,
+//      15.0, 70.0, 10, WorkloadType::BACKGROUND}
+// };
     
     
     FCFS fcfs;

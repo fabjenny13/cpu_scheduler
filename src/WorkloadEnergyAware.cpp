@@ -6,21 +6,45 @@
 
 FrequencyLevel WorkloadEnergyAwareScheduler::chooseFrequency(
     const CPUCore& core,
-    WorkloadType workload
+    const Process& process
 ) const
 {
-    if (workload == WorkloadType::INTERACTIVE)
+    // Interactive workloads need quick response
+    if (process.workload_type == WorkloadType::INTERACTIVE)
         return FrequencyLevel::HIGH;
 
-    if (workload == WorkloadType::BACKGROUND)
+    // Background workloads should prioritize energy saving
+    if (process.workload_type == WorkloadType::BACKGROUND)
+    {
+        if (process.cpu_utilization > 70.0)
+            return FrequencyLevel::MEDIUM;
+
         return FrequencyLevel::LOW;
+    }
 
+    // I/O-bound workloads spend much of their time waiting
+    if (process.workload_type == WorkloadType::IO_BOUND)
+    {
+        if (process.io_wait >= 60.0)
+            return FrequencyLevel::LOW;
+
+        return FrequencyLevel::MEDIUM;
+    }
+
+    // CPU-bound workloads benefit from higher frequency
+    if (process.workload_type == WorkloadType::CPU_BOUND)
+    {
+        if (process.cpu_utilization > 70.0)
+            return FrequencyLevel::HIGH;
+
+        if (process.cpu_utilization > 30.0)
+            return FrequencyLevel::MEDIUM;
+
+        return FrequencyLevel::LOW;
+    }
+
+    // Fallback: use observed core utilization
     double utilization = core.getUtilization();
-
-    if (workload == WorkloadType::IO_BOUND)
-        return utilization <= 50.0
-            ? FrequencyLevel::LOW
-            : FrequencyLevel::MEDIUM;
 
     if (utilization <= 30.0)
         return FrequencyLevel::LOW;
@@ -31,43 +55,90 @@ FrequencyLevel WorkloadEnergyAwareScheduler::chooseFrequency(
     return FrequencyLevel::HIGH;
 }
 
-
 CPUCore* WorkloadEnergyAwareScheduler::chooseCore(
     std::vector<CPUCore>& cores,
-    WorkloadType workload
+    const Process& process
 ) const
 {
-    bool wants_performance_core =
-        (workload == WorkloadType::INTERACTIVE ||
-         workload == WorkloadType::CPU_BOUND);
-
-    CPUCore* bestPreferred = nullptr;
-    CPUCore* bestAny = nullptr;
+    CPUCore* bestCore = nullptr;
+    double bestScore = 1e9;
 
     for (auto& core : cores)
     {
         if (core.isBusy())
             continue;
 
-        if (bestAny == nullptr ||
-            core.getUtilization() < bestAny->getUtilization())
+        double score = 0.0;
+
+        // CPU-bound workloads benefit from performance cores
+        if (process.workload_type == WorkloadType::CPU_BOUND)
         {
-            bestAny = &core;
+            if (core.isPerformanceCore())
+                score -= 30.0;
+            else
+                score += 10.0;
         }
 
-        if (core.isPerformanceCore() != wants_performance_core)
-            continue;
-
-        if (bestPreferred == nullptr ||
-            core.getUtilization() < bestPreferred->getUtilization())
+        // I/O-bound workloads are better suited to efficiency cores
+        if (process.workload_type == WorkloadType::IO_BOUND)
         {
-            bestPreferred = &core;
+            if (!core.isPerformanceCore())
+                score -= 30.0;
+            else
+                score += 10.0;
+        }
+
+        // Interactive processes prioritize responsiveness
+        if (process.workload_type == WorkloadType::INTERACTIVE)
+        {
+            if (core.isPerformanceCore())
+                score -= 40.0;
+            else
+                score += 10.0;
+        }
+
+        // Background processes prioritize energy efficiency
+        if (process.workload_type == WorkloadType::BACKGROUND)
+        {
+            if (!core.isPerformanceCore())
+                score -= 40.0;
+            else
+                score += 10.0;
+        }
+
+        // High CPU utilization favors performance cores
+        if (process.cpu_utilization > 70.0)
+        {
+            if (core.isPerformanceCore())
+                score -= 20.0;
+        }
+
+        // High I/O wait favors efficiency cores
+        if (process.io_wait > 60.0)
+        {
+            if (!core.isPerformanceCore())
+                score -= 20.0;
+        }
+
+        // Higher priority means responsiveness is more important
+        if (process.priority <= 3 &&
+            core.isPerformanceCore())
+        {
+            score -= 15.0;
+        }
+
+        // Prefer the currently less-utilized core
+        score += core.getUtilization();
+
+        if (score < bestScore)
+        {
+            bestScore = score;
+            bestCore = &core;
         }
     }
 
-    return bestPreferred != nullptr ? bestPreferred : bestAny;
+    return bestCore;
 }
-
 
 void WorkloadEnergyAwareScheduler::schedule(
     std::vector<Process>& processes,
@@ -97,13 +168,13 @@ void WorkloadEnergyAwareScheduler::schedule(
         if (already_running)
             continue;
 
-        CPUCore* core = chooseCore(cores, process.workload);
+        CPUCore* core = chooseCore(cores, process);
 
         if (core == nullptr)
             break;
 
         FrequencyLevel frequency =
-            chooseFrequency(*core, process.workload);
+            chooseFrequency(*core, process);
 
         double frequencyGHz = getFrequencyGHz(frequency);
         double power = PowerModel::getPower(frequencyGHz);

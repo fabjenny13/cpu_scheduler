@@ -78,7 +78,7 @@ std::vector<Process> DatasetLoader::loadCSV(
 
         // WorkloadType
         std::getline(ss, value, ',');
-        process.workload = parseWorkloadType(value);
+        process.workload_type = parseWorkloadType(value);
 
         // Initialize scheduling results
         process.start_time = -1;
