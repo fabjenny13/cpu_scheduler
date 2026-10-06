@@ -12,6 +12,7 @@
 #include "EnergyAwareScheduler.h"
 #include "Simulator.h"
 #include "Metrics.h"
+#include "DatasetLoader.h"
 
 namespace
 {
@@ -34,14 +35,9 @@ void printComparisonRow(
 
 int main()
 {
-    std::vector<Process> processes =
-    {
-        {1, 0, 5, 5, -1, -1, 0, 0, 0, WorkloadType::CPU_BOUND},
-        {2, 1, 3, 3, -1, -1, 0, 0, 0, WorkloadType::IO_BOUND},
-        {3, 2, 8, 8, -1, -1, 0, 0, 0, WorkloadType::BACKGROUND},
-        {4, 3, 6, 6, -1, -1, 0, 0, 0, WorkloadType::INTERACTIVE}
-    };
-
+    std::vector<Process> processes = DatasetLoader::loadCSV("data/synthetic_2000.csv");
+    
+    
     FCFS fcfs;
     Simulator fcfsSimulator(processes, 2, &fcfs);
     double fcfsEnergy = fcfsSimulator.run();

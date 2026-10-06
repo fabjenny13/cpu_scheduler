@@ -1,30 +1,37 @@
 #ifndef PROCESS_H
 #define PROCESS_H
 
-enum class WorkloadType {
+#include <string>
+
+enum class WorkloadType
+{
     CPU_BOUND,
     IO_BOUND,
-    INTERACTIVE,
-    BACKGROUND
+    BACKGROUND,
+    INTERACTIVE
 };
 
-struct Process {
+struct Process
+{
+    // Scheduling information
     int pid;
-
     int arrival_time;
     int burst_time;
     int remaining_time;
 
-    int start_time = -1;
-    int completion_time = -1;
+    // Scheduling results
+    int start_time;
+    int completion_time;
+    int waiting_time;
+    int turnaround_time;
+    int response_time;
 
-    int waiting_time = -1;
-    int turnaround_time = -1;
-    int response_time = -1;
+    // Workload characteristics
+    double cpu_utilization;
+    double io_wait;
+    int priority;
 
     WorkloadType workload;
-
-    double cpu_intensity;
 };
 
 #endif
