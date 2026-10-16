@@ -63,6 +63,7 @@ std::vector<Process> DatasetLoader::loadCSV(
 
         // Remaining time starts equal to burst time
         process.remaining_time = process.burst_time;
+        process.service_time = 0.0;
 
         // CPUUtilization
         std::getline(ss, value, ',');

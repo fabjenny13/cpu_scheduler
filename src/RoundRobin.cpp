@@ -14,6 +14,7 @@ void RoundRobin::schedule(
     for (auto& process : processes)
     {
         if (process.arrival_time <= current_time &&
+            process.blocked_until <= current_time &&
             process.remaining_time > 0 &&
             inQueue.find(process.pid) == inQueue.end())
         {

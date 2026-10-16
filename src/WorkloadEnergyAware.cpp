@@ -1,8 +1,7 @@
 #include "WorkloadEnergyAware.h"
 #include "Frequency.h"
-#include "PowerModel.h"
 
-#include <iostream>
+#include <algorithm>
 
 FrequencyLevel WorkloadEnergyAwareScheduler::chooseFrequency(
     const CPUCore& core,
@@ -13,23 +12,11 @@ FrequencyLevel WorkloadEnergyAwareScheduler::chooseFrequency(
     if (process.workload_type == WorkloadType::INTERACTIVE)
         return FrequencyLevel::HIGH;
 
-    // Background workloads should prioritize energy saving
-    if (process.workload_type == WorkloadType::BACKGROUND)
-    {
-        if (process.cpu_utilization > 70.0)
-            return FrequencyLevel::MEDIUM;
-
-        return FrequencyLevel::LOW;
-    }
-
-    // I/O-bound workloads spend much of their time waiting
-    if (process.workload_type == WorkloadType::IO_BOUND)
-    {
-        if (process.io_wait >= 60.0)
-            return FrequencyLevel::LOW;
-
+    // Low and medium have equal modeled energy per unit of CPU work;
+    // medium finishes twice as quickly, so use it for non-urgent work.
+    if (process.workload_type == WorkloadType::BACKGROUND ||
+        process.workload_type == WorkloadType::IO_BOUND)
         return FrequencyLevel::MEDIUM;
-    }
 
     // CPU-bound workloads benefit from higher frequency
     if (process.workload_type == WorkloadType::CPU_BOUND)
@@ -37,10 +24,7 @@ FrequencyLevel WorkloadEnergyAwareScheduler::chooseFrequency(
         if (process.cpu_utilization > 70.0)
             return FrequencyLevel::HIGH;
 
-        if (process.cpu_utilization > 30.0)
-            return FrequencyLevel::MEDIUM;
-
-        return FrequencyLevel::LOW;
+        return FrequencyLevel::MEDIUM;
     }
 
     // Fallback: use observed core utilization
@@ -145,13 +129,40 @@ void WorkloadEnergyAwareScheduler::schedule(
     std::vector<CPUCore>& cores,
     int current_time)
 {
+    // Keep the chosen DVFS level current as process state and core load change.
+    for (auto& core : cores)
+    {
+        if (!core.isBusy())
+            continue;
+        for (const auto& process : processes)
+        {
+            if (process.pid == core.getCurrentProcess())
+            {
+                core.setFrequency(getFrequencyGHz(chooseFrequency(core, process)));
+                break;
+            }
+        }
+    }
+
+    std::vector<Process*> ready;
     for (auto& process : processes)
     {
-        if (process.arrival_time > current_time)
-            continue;
+        if (process.arrival_time <= current_time &&
+            process.blocked_until <= current_time && process.remaining_time > 0)
+            ready.push_back(&process);
+    }
+    std::sort(ready.begin(), ready.end(), [](const Process* a, const Process* b)
+    {
+        if (a->arrival_time != b->arrival_time)
+            return a->arrival_time < b->arrival_time;
+        if (a->priority != b->priority)
+            return a->priority < b->priority;
+        return a->pid < b->pid;
+    });
 
-        if (process.remaining_time <= 0)
-            continue;
+    for (Process* process_ptr : ready)
+    {
+        Process& process = *process_ptr;
 
         bool already_running = false;
 
@@ -175,21 +186,6 @@ void WorkloadEnergyAwareScheduler::schedule(
 
         FrequencyLevel frequency =
             chooseFrequency(*core, process);
-
-        double frequencyGHz = getFrequencyGHz(frequency);
-        double power = PowerModel::getPower(frequencyGHz);
-
-        std::cout << "Time " << current_time
-          << ": P" << process.pid
-          << " -> Core " << core->getId()
-          << " (" << (core->isPerformanceCore() ? "perf" : "efficiency")
-          << ") | Utilization: "
-          << core->getUtilization()
-          << "% | Frequency: "
-          << getFrequencyGHz(frequency)
-          << " GHz\n"
-          << power
-          << " W\n";
 
         core->setFrequency(getFrequencyGHz(frequency));
         core->assignProcess(process.pid);

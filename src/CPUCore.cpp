@@ -41,6 +41,19 @@ bool CPUCore::isPerformanceCore() const
     return performance_core;
 }
 
+double CPUCore::getSpeedFactor() const
+{
+    // Simplified heterogeneous-core model: efficiency cores deliver 65% of
+    // performance-core throughput at the same frequency.
+    return performance_core ? 1.0 : 0.65;
+}
+
+double CPUCore::getPowerFactor() const
+{
+    // Efficiency cores draw 55% of performance-core dynamic power.
+    return performance_core ? 1.0 : 0.55;
+}
+
 void CPUCore::assignProcess(int pid)
 {
     current_process = pid;

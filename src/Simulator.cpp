@@ -1,6 +1,8 @@
 #include "Simulator.h"
 #include "PowerModel.h"
 #include <iostream>
+#include <cmath>
+#include <algorithm>
 
 Simulator::Simulator(
     const std::vector<Process>& processes,
@@ -12,6 +14,31 @@ Simulator::Simulator(
     for (auto& process : this->processes)
     {
         process.remaining_time = process.burst_time;
+        process.work_completed = 0.0;
+        process.service_time = 0.0;
+        process.io_time = 0.0;
+        process.blocked_until = 0;
+        process.io_events_remaining = 0;
+        process.next_io_at = 0.0;
+        process.io_work_interval = 0.0;
+        process.io_wait_per_event = 0;
+
+        const bool can_block_for_io =
+            process.workload_type != WorkloadType::CPU_BOUND;
+        if (can_block_for_io && process.io_wait > 0.0 && process.burst_time > 1)
+        {
+            const double io_fraction =
+                std::clamp(process.io_wait, 0.0, 95.0) / 100.0;
+            process.io_events_remaining =
+                std::max(1, process.burst_time / 4);
+            process.io_work_interval = process.burst_time /
+                static_cast<double>(process.io_events_remaining + 1);
+            process.next_io_at = process.io_work_interval;
+            const double total_io_time = process.burst_time * io_fraction /
+                (1.0 - io_fraction);
+            process.io_wait_per_event = std::max(1, static_cast<int>(std::ceil(
+                total_io_time / process.io_events_remaining)));
+        }
     }
     this->scheduler = scheduler;
     current_time = 0;
@@ -82,7 +109,8 @@ double Simulator::run()
             // This core was actually executing during this tick.
             core.updateUtilization(true);
 
-            double power = PowerModel::getPower(core.getFrequency());
+            double power = PowerModel::getPower(core.getFrequency()) *
+                core.getPowerFactor();
 
             double energy = PowerModel::calculateEnergy(power, 1.0);
 
@@ -106,11 +134,32 @@ double Simulator::run()
                     process.response_time = process.start_time - process.arrival_time;
                 }
 
-                process.remaining_time--;
+                // Frequency is relative to the 3 GHz baseline: 3 GHz performs
+                // one burst unit per tick, while lower frequencies take longer.
+                const double work = core.getFrequency() / 3.0 *
+                    core.getSpeedFactor();
+                const double completed_work =
+                    std::min(process.remaining_time, work);
+                process.remaining_time -= completed_work;
+                process.work_completed += completed_work;
+                // Service time is elapsed CPU time, not burst work. Keeping
+                // these separate is necessary when the frequency is below 3 GHz.
+                process.service_time += 1.0;
 
-                // Process finished.
-                if (process.remaining_time == 0)
+                if (process.io_events_remaining > 0 &&
+                    process.work_completed + 1e-9 >= process.next_io_at)
                 {
+                    process.io_events_remaining--;
+                    process.next_io_at += process.io_work_interval;
+                    process.blocked_until = current_time + 1 +
+                        process.io_wait_per_event;
+                    process.io_time += process.io_wait_per_event;
+                    core.release();
+                }
+                // Process finished.
+                else if (process.remaining_time <= 1e-9)
+                {
+                    process.remaining_time = 0.0;
                     process.completion_time =
                         current_time + 1;
 
@@ -118,9 +167,9 @@ double Simulator::run()
                         process.completion_time -
                         process.arrival_time;
 
-                    process.waiting_time =
-                        process.turnaround_time -
-                        process.burst_time;
+                    process.waiting_time = std::max(
+                        0.0, process.turnaround_time - process.service_time -
+                            process.io_time);
 
                     core.release();
                 }

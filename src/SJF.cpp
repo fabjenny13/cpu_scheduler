@@ -16,12 +16,13 @@ void SJF::schedule(
         int selected = -1;
         int shortest_burst = INT_MAX;
 
-        for (int i = 0; i < processes.size(); i++)
+        for (std::size_t i = 0; i < processes.size(); i++)
         {
             if (assigned[i])
                 continue;
 
-            if (processes[i].arrival_time > current_time)
+            if (processes[i].arrival_time > current_time ||
+                processes[i].blocked_until > current_time)
                 continue;
 
             if (processes[i].remaining_time <= 0)
@@ -43,7 +44,11 @@ void SJF::schedule(
             if (already_running)
                 continue;
 
-            if (processes[i].burst_time < shortest_burst)
+            if (processes[i].burst_time < shortest_burst ||
+                (processes[i].burst_time == shortest_burst && selected != -1 &&
+                 (processes[i].arrival_time < processes[selected].arrival_time ||
+                  (processes[i].arrival_time == processes[selected].arrival_time &&
+                   processes[i].pid < processes[selected].pid))))
             {
                 shortest_burst = processes[i].burst_time;
                 selected = i;

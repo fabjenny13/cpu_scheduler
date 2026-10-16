@@ -1,46 +1,38 @@
 #include "EnergyAwareScheduler.h"
 #include "Frequency.h"
-#include "PowerModel.h"
 
-#include <iostream>
 
 FrequencyLevel EnergyAwareScheduler::chooseFrequency(
-    const CPUCore& core
+    const Process& process
 ) const
 {
-    double utilization = core.getUtilization();
-
-    if (utilization <= 30.0)
-        return FrequencyLevel::LOW;
-
-    if (utilization <= 70.0)
-        return FrequencyLevel::MEDIUM;
-
-    return FrequencyLevel::HIGH;
+    // Medium has the same modeled energy per unit of work as low, but takes
+    // half as long. Reserve high frequency for latency-sensitive processes.
+    return process.priority <= 3
+        ? FrequencyLevel::HIGH
+        : FrequencyLevel::MEDIUM;
 }
 
 
 CPUCore* EnergyAwareScheduler::chooseCore(
-    std::vector<CPUCore>& cores
+    std::vector<CPUCore>& cores,
+    const Process& process
 ) const
 {
     CPUCore* bestCore = nullptr;
+    double bestScore = 1e9;
 
     for (auto& core : cores)
     {
         if (core.isBusy())
             continue;
 
-        if (bestCore == nullptr)
+        const bool needsFastCore = process.priority <= 3;
+        double score = core.getUtilization() +
+            ((core.isPerformanceCore() == needsFastCore) ? 0.0 : 25.0);
+        if (score < bestScore)
         {
-            bestCore = &core;
-            continue;
-        }
-
-        // Choose the less utilized core.
-        if (core.getUtilization() <
-            bestCore->getUtilization())
-        {
+            bestScore = score;
             bestCore = &core;
         }
     }
@@ -54,9 +46,26 @@ void EnergyAwareScheduler::schedule(
     std::vector<CPUCore>& cores,
     int current_time)
 {
+    // Re-evaluate running jobs every tick so DVFS decisions respond to the
+    // active workload instead of remaining fixed for an entire process.
+    for (auto& core : cores)
+    {
+        if (!core.isBusy())
+            continue;
+        for (const auto& process : processes)
+        {
+            if (process.pid == core.getCurrentProcess())
+            {
+                core.setFrequency(getFrequencyGHz(chooseFrequency(process)));
+                break;
+            }
+        }
+    }
+
     for (auto& process : processes)
     {
-        if (process.arrival_time > current_time)
+        if (process.arrival_time > current_time ||
+            process.blocked_until > current_time)
             continue;
 
         if (process.remaining_time <= 0)
@@ -78,28 +87,12 @@ void EnergyAwareScheduler::schedule(
         if (already_running)
             continue;
 
-        CPUCore* core = chooseCore(cores);
+        CPUCore* core = chooseCore(cores, process);
 
         if (core == nullptr)
             break;
 
-        FrequencyLevel frequency =
-            chooseFrequency(*core);
-
-        double frequencyGHz = getFrequencyGHz(frequency);
-
-        double power = PowerModel::getPower(frequencyGHz);
-
-        std::cout << "Time " << current_time
-          << ": P" << process.pid
-          << " -> Core " << core->getId()
-          << " | Utilization: "
-          << core->getUtilization()
-          << "% | Frequency: "
-          << getFrequencyGHz(frequency)
-          << " GHz\n"
-          << power
-          << " W\n";
+        FrequencyLevel frequency = chooseFrequency(process);
 
         core->setFrequency(
             getFrequencyGHz(frequency)

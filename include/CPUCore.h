@@ -34,6 +34,8 @@ public:
     double getFrequency() const;
 
     bool isPerformanceCore() const;
+    double getSpeedFactor() const;
+    double getPowerFactor() const;
 
     void assignProcess(int pid);
 

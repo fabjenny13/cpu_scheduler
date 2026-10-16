@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <cmath>
 
 #include "Process.h"
 #include "FCFS.h"
@@ -35,7 +36,7 @@ void printComparisonRow(
 
 int main()
 {
-    std::vector<Process> processes = DatasetLoader::loadCSV("data/synthetic_2000.csv");
+    std::vector<Process> processes = DatasetLoader::loadCSV("data/data_2000.csv");
 
 //     std::vector<Process> processes =
 // {
@@ -54,31 +55,31 @@ int main()
     
     
     FCFS fcfs;
-    Simulator fcfsSimulator(processes, 2, &fcfs);
+    Simulator fcfsSimulator(processes, 4, &fcfs);
     double fcfsEnergy = fcfsSimulator.run();
     Metrics fcfsMetrics = calculateMetrics(fcfsSimulator.getProcesses(), fcfsEnergy);
     printResults(fcfsSimulator.getProcesses(), "FCFS");
 
     SJF sjf;
-    Simulator sjfSimulator(processes, 2, &sjf);
+    Simulator sjfSimulator(processes, 4, &sjf);
     double sjfEnergy = sjfSimulator.run();
     Metrics sjfMetrics = calculateMetrics(sjfSimulator.getProcesses(), sjfEnergy);
     printResults(sjfSimulator.getProcesses(), "SJF");
 
     RoundRobin rr(2);
-    Simulator rrSimulator(processes, 2, &rr);
+    Simulator rrSimulator(processes, 4, &rr);
     double rrEnergy = rrSimulator.run();
     Metrics rrMetrics = calculateMetrics(rrSimulator.getProcesses(), rrEnergy);
     printResults(rrSimulator.getProcesses(), "Round Robin");
 
     EnergyAwareScheduler energyScheduler;
-    Simulator energySimulator(processes, 2, &energyScheduler);
+    Simulator energySimulator(processes, 4, &energyScheduler);
     double energyEnergy = energySimulator.run();
     Metrics energyMetrics = calculateMetrics(energySimulator.getProcesses(), energyEnergy);
     printResults(energySimulator.getProcesses(), "Energy Aware Scheduler");
 
     WorkloadEnergyAwareScheduler workloadScheduler;
-    Simulator workloadSimulator(processes, 2, &workloadScheduler);
+    Simulator workloadSimulator(processes, 4, &workloadScheduler);
     double workloadEnergy = workloadSimulator.run();
     Metrics workloadMetrics = calculateMetrics(workloadSimulator.getProcesses(), workloadEnergy);
     printResults(workloadSimulator.getProcesses(), "Workload Energy Aware Scheduler");
@@ -107,8 +108,9 @@ int main()
 
         std::cout << "\nWorkload-aware scheduler uses "
                   << std::fixed << std::setprecision(1)
-                  << savingsPercent
-                  << "% less energy than the best baseline scheduler.\n";
+                  << std::abs(savingsPercent)
+                  << (savingsPercent >= 0.0 ? "% less" : "% more")
+                  << " energy than the best baseline scheduler.\n";
     }
 
     return 0;

@@ -8,11 +8,12 @@ class EnergyAwareScheduler : public Scheduler
 {
 private:
     FrequencyLevel chooseFrequency(
-        const CPUCore& core
+        const Process& process
     ) const;
 
     CPUCore* chooseCore(
-        std::vector<CPUCore>& cores
+        std::vector<CPUCore>& cores,
+        const Process& process
     ) const;
 
 public:
